@@ -1,0 +1,22 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "avicenne-pay"
+version = "0.1.0"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi",
+    "uvicorn[standard]",
+    "sqlalchemy[asyncio]",
+    "asyncpg",
+    "alembic",
+    "jinja2",
+    "python-multipart",
+    "passlib[bcrypt]",
+    "itsdangerous",
+    "cryptography",
+    "python-dotenv",
+    "psycopg2-binary",
+]

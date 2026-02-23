@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block title %}Tableau de bord – Avicenne Pay{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>Bonjour, {{ user.prenom or user.email }} 👋</h1>
+</div>
+
+{% if not user.profil_complete and user.role.value != 'admin' %}
+<div class="alert alert-warning d-flex align-items-center" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2 fs-4"></i>
+    <div>
+        <strong>Profil incomplet !</strong>
+        Veuillez compléter votre profil pour pouvoir créer des déclarations.
+        <a href="/profile" class="alert-link ms-2">Compléter mon profil →</a>
+    </div>
+</div>
+{% endif %}
+
+<div class="row g-4 mt-2">
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-file-text display-4 text-primary"></i>
+                {% if user.role.value in ['admin', 'coordo', 'resp', 'tcp'] %}
+                <h5 class="card-title mt-3">Déclarations</h5>
+                <p class="card-text text-muted">Consultez et gérez toutes les déclarations d'activité.</p>
+                <a href="/declarations" class="btn btn-primary">Voir les déclarations</a>
+                {% else %}
+                <h5 class="card-title mt-3">Mes déclarations</h5>
+                <p class="card-text text-muted">Gérez vos déclarations mensuelles d'activité.</p>
+                <a href="/declarations" class="btn btn-primary">Voir mes déclarations</a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-person-circle display-4 text-secondary"></i>
+                <h5 class="card-title mt-3">Mon profil</h5>
+                <p class="card-text text-muted">Mettez à jour vos informations personnelles et bancaires.</p>
+                <a href="/profile" class="btn btn-outline-secondary">Mon profil</a>
+            </div>
+        </div>
+    </div>
+    {% if user.role.value == 'admin' %}
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-people display-4 text-success"></i>
+                <h5 class="card-title mt-3">Utilisateurs</h5>
+                <p class="card-text text-muted">Gérez les utilisateurs de l'application.</p>
+                <a href="/admin/users" class="btn btn-outline-success">Gérer</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card h-100 shadow-sm">
+            <div class="card-body text-center">
+                <i class="bi bi-briefcase display-4 text-info"></i>
+                <h5 class="card-title mt-3">Missions</h5>
+                <p class="card-text text-muted">Gérez les missions et sous-missions.</p>
+                <a href="/missions" class="btn btn-outline-info">Gérer</a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

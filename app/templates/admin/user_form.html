@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block title %}{% if edit_user %}Modifier{% else %}Nouvel{% endif %} utilisateur – Avicenne Pay{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="mb-4">
+            {% if edit_user %}<i class="bi bi-pencil"></i> Modifier l'utilisateur{% else %}<i class="bi bi-person-plus"></i> Nouvel utilisateur{% endif %}
+        </h1>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" action="/admin/users/{% if edit_user %}{{ edit_user.id }}/edit{% else %}new{% endif %}">
+                    <div class="mb-3">
+                        <label class="form-label">Email *</label>
+                        <input type="email" name="email" class="form-control" value="{{ edit_user.email if edit_user else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Rôle *</label>
+                        <select name="role" class="form-select" required>
+                            {% for r in roles %}
+                            <option value="{{ r.value }}" {% if edit_user and edit_user.role == r %}selected{% endif %}>{{ r.value|capitalize }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe {% if edit_user %}(laisser vide pour ne pas changer){% else %}*{% endif %}</label>
+                        <input type="password" name="password" class="form-control" {% if not edit_user %}required{% endif %} minlength="8">
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Enregistrer
+                        </button>
+                        <a href="/admin/users" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block title %}Déclarations – Avicenne Pay{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-file-text"></i> Déclarations</h1>
+    <a href="/declarations/new" class="btn btn-primary"><i class="bi bi-plus-circle"></i> Nouvelle déclaration</a>
+</div>
+
+{% if user.role.value in ['admin', 'coordo', 'resp', 'tcp'] %}
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="get" action="/declarations" class="row g-3 align-items-end">
+            <div class="col-md-3">
+                <label class="form-label">Site</label>
+                <select name="site" class="form-select">
+                    <option value="">Tous les sites</option>
+                    {% for s in sites %}
+                    <option value="{{ s.value }}" {% if current_site == s.value %}selected{% endif %}>{{ s.value }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Mois</label>
+                <select name="mois" class="form-select">
+                    <option value="">Tous</option>
+                    {% for num, label in mois_labels.items() %}
+                    <option value="{{ num }}" {% if current_mois == num %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Année</label>
+                <input type="number" name="annee" class="form-control" value="{{ current_annee or '' }}" placeholder="2025">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Statut</label>
+                <select name="statut" class="form-select">
+                    <option value="">Tous</option>
+                    {% for s in statuts %}
+                    <option value="{{ s.value }}" {% if current_statut == s.value %}selected{% endif %}>{{ s.value|capitalize }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-funnel"></i> Filtrer</button>
+            </div>
+            <div class="col-md-1">
+                <a href="/declarations" class="btn btn-outline-secondary w-100"><i class="bi bi-x"></i></a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% if not declarations %}
+<div class="alert alert-info">Aucune déclaration trouvée.</div>
+{% else %}
+<div class="table-responsive">
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                {% if user.role.value in ['admin', 'coordo', 'resp', 'tcp'] %}
+                <th>Collaborateur</th>
+                <th>Site</th>
+                {% endif %}
+                <th>Période</th>
+                <th>Statut</th>
+                <th>Soumise le</th>
+                <th>Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for decl in declarations %}
+            <tr>
+                {% if user.role.value in ['admin', 'coordo', 'resp', 'tcp'] %}
+                <td>{{ decl.user.prenom or '' }} {{ decl.user.nom or decl.user.email }}</td>
+                <td>{{ decl.user.site.value if decl.user.site else '–' }}</td>
+                {% endif %}
+                <td>{{ mois_labels[decl.mois] }} {{ decl.annee }}</td>
+                <td>
+                    {% if decl.statut.value == 'brouillon' %}
+                    <span class="badge bg-warning text-dark">Brouillon</span>
+                    {% else %}
+                    <span class="badge bg-success">Soumise</span>
+                    {% endif %}
+                </td>
+                <td>{{ decl.soumise_le.strftime('%d/%m/%Y') if decl.soumise_le else '–' }}</td>
+                <td>
+                    <a href="/declarations/{{ decl.id }}" class="btn btn-sm btn-outline-primary"><i class="bi bi-eye"></i></a>
+                    {% if decl.statut.value == 'brouillon' and (decl.user_id == user.id or user.role.value in ['admin', 'coordo']) %}
+                    <a href="/declarations/{{ decl.id }}/edit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                    {% elif decl.statut.value == 'soumise' and user.role.value in ['admin', 'coordo'] %}
+                    <a href="/declarations/{{ decl.id }}/edit" class="btn btn-sm btn-outline-secondary"><i class="bi bi-pencil"></i></a>
+                    {% endif %}
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

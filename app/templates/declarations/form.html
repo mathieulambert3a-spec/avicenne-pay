@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block title %}{% if declaration %}Modifier{% else %}Nouvelle{% endif %} déclaration – Avicenne Pay{% endblock %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1>
+        {% if declaration %}<i class="bi bi-pencil"></i> Modifier la déclaration{% else %}<i class="bi bi-plus-circle"></i> Nouvelle déclaration{% endif %}
+    </h1>
+    <div class="text-end">
+        <strong>Total : <span id="totalAmount" class="text-success fs-5">0,00 €</span></strong>
+    </div>
+</div>
+
+<form method="post" action="/declarations/{% if declaration %}{{ declaration.id }}/edit{% else %}new{% endif %}">
+    <div class="card mb-4">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label">Mois *</label>
+                    <select name="mois" class="form-select">
+                        {% for num, label in mois_labels.items() %}
+                        <option value="{{ num }}" {% if default_mois == num %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label">Année *</label>
+                    <input type="number" name="annee" class="form-control" value="{{ default_annee }}" required>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% for mission in missions %}
+    {% set active_sms = mission.sous_missions | selectattr('is_active') | list %}
+    {% if active_sms %}
+    <div class="card mb-3">
+        <div class="card-header bg-light">
+            <strong>{{ mission.titre }}</strong>
+            {% if mission.resp_only %}
+            <span class="badge bg-warning text-dark ms-2"><i class="bi bi-person-badge"></i> RESP uniquement</span>
+            {% endif %}
+        </div>
+        <div class="card-body p-0">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Sous-mission</th>
+                        <th style="width:120px">Tarif</th>
+                        <th style="width:140px">Quantité</th>
+                        <th style="width:120px">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sm in active_sms %}
+                    <tr>
+                        <td>
+                            {{ sm.titre }}
+                            {% if sm.unite %}<small class="text-muted">({{ sm.unite }})</small>{% endif %}
+                        </td>
+                        <td>{{ "%.2f"|format(sm.tarif) }} €</td>
+                        <td>
+                            {% if mission.resp_only %}
+                            {# Quantité fixe à 1 pour les missions RESP #}
+                            <input type="hidden" name="quantite_{{ sm.id }}" value="1">
+                            <span class="badge bg-secondary">1 (fixe)</span>
+                            {% else %}
+                            <input type="number" name="quantite_{{ sm.id }}"
+                                class="form-control form-control-sm quantite-input"
+                                data-tarif="{{ sm.tarif }}"
+                                min="0" step="0.5"
+                                value="{{ lignes_map.get(sm.id, '') }}"
+                                placeholder="0">
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if mission.resp_only %}
+                            <span class="montant-cell" id="montant_{{ sm.id }}">{{ "%.2f"|format(sm.tarif) }} €</span>
+                            <input type="hidden" class="quantite-input" data-tarif="{{ sm.tarif }}" data-fixed="1" name="_montant_{{ sm.id }}" value="1">
+                            {% else %}
+                            <span class="montant-cell" id="montant_{{ sm.id }}">0,00 €</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {% endif %}
+    {% endfor %}
+
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <strong class="fs-5">Total général : <span class="text-success" id="totalAmountBottom">0,00 €</span></strong>
+                <div class="d-flex gap-2">
+                    <a href="/declarations" class="btn btn-outline-secondary">Annuler</a>
+                    <button type="submit" name="action" value="brouillon" class="btn btn-outline-primary">
+                        <i class="bi bi-save"></i> Enregistrer brouillon
+                    </button>
+                    {% if not declaration or declaration.statut.value == 'brouillon' %}
+                    <button type="submit" name="action" value="soumettre" class="btn btn-success"
+                        onclick="return confirm('Soumettre cette déclaration ? Elle ne sera plus modifiable.')">
+                        <i class="bi bi-send"></i> Soumettre
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function formatMoney(val) {
+    return val.toFixed(2).replace('.', ',') + ' €';
+}
+
+function recalculate() {
+    let total = 0;
+    // Inputs quantité normaux
+    document.querySelectorAll('.quantite-input:not([data-fixed])').forEach(input => {
+        const tarif = parseFloat(input.dataset.tarif) || 0;
+        const qty = parseFloat(input.value) || 0;
+        const montant = tarif * qty;
+        total += montant;
+        const smId = input.name.split('_')[1];
+        const cell = document.getElementById('montant_' + smId);
+        if (cell) cell.textContent = formatMoney(montant);
+    });
+    // Inputs fixe (resp_only, quantité = 1)
+    document.querySelectorAll('.quantite-input[data-fixed]').forEach(input => {
+        const tarif = parseFloat(input.dataset.tarif) || 0;
+        total += tarif;
+    });
+    document.getElementById('totalAmount').textContent = formatMoney(total);
+    document.getElementById('totalAmountBottom').textContent = formatMoney(total);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.quantite-input:not([data-fixed])').forEach(input => {
+        input.addEventListener('input', recalculate);
+    });
+    recalculate();
+});
+</script>
+{% endblock %}

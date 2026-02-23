@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}{% if mission %}Modifier{% else %}Nouvelle{% endif %} mission – Avicenne Pay{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <h1 class="mb-4">
+            {% if mission %}<i class="bi bi-pencil"></i> Modifier la mission{% else %}<i class="bi bi-plus-circle"></i> Nouvelle mission{% endif %}
+        </h1>
+        <div class="card shadow-sm">
+            <div class="card-body">
+                <form method="post" action="/missions/{% if mission %}{{ mission.id }}/edit{% else %}new{% endif %}">
+                    <div class="mb-3">
+                        <label class="form-label">Titre *</label>
+                        <input type="text" name="titre" class="form-control" value="{{ mission.titre if mission else '' }}" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Ordre d'affichage</label>
+                        <input type="number" name="ordre" class="form-control" value="{{ mission.ordre if mission else 0 }}">
+                    </div>
+                    <div class="mb-3 form-check">
+                        <input type="checkbox" name="is_active" class="form-check-input" id="isActive"
+                            {% if mission is none or mission.is_active %}checked{% endif %}>
+                        <label class="form-check-label" for="isActive">Active</label>
+                    </div>
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save"></i> Enregistrer
+                        </button>
+                        <a href="/missions" class="btn btn-outline-secondary">Annuler</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
