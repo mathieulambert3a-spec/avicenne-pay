@@ -165,5 +165,27 @@ Calcul automatique des coûts chargés (Coût entreprise) :
 
 ## 🛠️ 9. Stack Technique
 * **Frontend :** **React** (Utilisation de Tailwind pour le Dashboard).
+* 
+
+
+avicenne_pay/
+├── app/
+│   ├── __init__.py
+│   ├── main.py              # Point d'entrée FastAPI
+│   ├── database.py          # Configuration SQLAlchemy (Engine, Session)
+│   ├── models.py            # Tes classes SQLAlchemy (User, Declaration...)
+│   ├── schemas.py           # Tes schémas Pydantic (Validation)
+│   ├── crud.py              # Logique d'accès aux données (Create, Read...)
+│   ├── routers/             # Un fichier par grande fonctionnalité
+│   │   ├── auth.py          # Login, Register
+│   │   ├── declarations.py  # Saisie TCP/RESP, validation
+│   │   ├── users.py         # Gestion profils, TOPs
+│   │   └── parrainage.py    # Affectation étudiants
+│   └── core/
+│       ├── config.py        # Variables d'environnement (DB_URL, SECRET_KEY)
+│       └── security.py      # Chiffrement NSS/IBAN, Hachage MDP
+├── tests/                   # Tes tests unitaires
+├── .env                     # Tes secrets (NE PAS COMMIT)
+└── requirements.txt         # Tes dépendances
 * **Backend :** **FastAPI** (Python 3.10+).
 * **Base de données :** **PostgreSQL** (Hébergée sur Render ou AWS RDS).
