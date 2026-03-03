@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <style>
+        @page { 
+            size: A4; 
+            margin: 2cm 2.5cm; 
+        }
+        body { 
+            font-family: 'Times New Roman', Times, serif; 
+            color: #1a1a1a; 
+            font-size: 10.5pt;
+            line-height: 1.6;
+        }
+        
+        .header { width: 100%; margin-bottom: 80px; }
+        
+        .sender {
+            float: left;
+            width: 50%;
+            letter-spacing: 1px;
+        }
+        .sender-name {
+            font-size: 13pt;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            display: block;
+        }
+        .nss-mention {
+            font-family: Arial, sans-serif;
+            font-size: 9pt;
+            color: #444;
+            margin-top: 5px;
+        }
+
+        .recipient {
+            float: right;
+            width: 40%;
+            text-align: right;
+            font-family: Arial, sans-serif;
+            font-size: 9.5pt;
+        }
+        .recipient-label { font-style: italic; color: #666; margin-bottom: 5px; display: block; }
+        
+        .clear { clear: both; }
+
+        .invoice-body { margin-top: 40px; }
+        
+        .invoice-title {
+            font-size: 22pt;
+            font-weight: lighter;
+            border-bottom: 1px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+            letter-spacing: 2px;
+        }
+
+        .section-title {
+            font-family: Arial, sans-serif;
+            text-transform: uppercase;
+            font-size: 9pt;
+            font-weight: bold;
+            letter-spacing: 1.5px;
+            border-bottom: 1px solid #000;
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+
+        .content-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+        .content-table th {
+            font-family: Arial, sans-serif;
+            font-size: 8pt;
+            text-transform: uppercase;
+            color: #888;
+            text-align: left;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        .content-table td {
+            padding: 20px 0;
+            border-bottom: 1px solid #f9f9f9;
+        }
+
+        .total-section {
+            float: right;
+            width: 250px;
+            border-top: 2px solid #000;
+            padding-top: 10px;
+            text-align: right;
+        }
+        .total-label { font-family: Arial, sans-serif; font-size: 9pt; text-transform: uppercase; }
+        .total-amount { font-size: 16pt; font-weight: bold; display: block; }
+
+        .footer {
+            position: absolute;
+            bottom: 0;
+            width: 100%;
+            font-size: 9pt;
+            border-top: 1px solid #eee;
+            padding-top: 20px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <div class="sender">
+            <span class="sender-name">{{ user_fullname }}</span>
+            {{ user_address }}<br>
+            {{ user_cp_ville }}<br>
+            <div class="nss-mention">NSS : {{ user_nss }}</div>
+        </div>
+        <div class="recipient">
+            <span class="recipient-label">Destinataire</span>
+            <strong>Avicenne et associés</strong><br>
+            177 Grande rue,<br>
+            69600, Oullins<br>
+            <span style="font-size: 8pt;">SIRET : 800 871 816 00024</span>
+        </div>
+        <div class="clear"></div>
+    </div>
+
+    <div class="invoice-body">
+        <div class="invoice-title">Facture</div>
+        <div style="text-align: right; font-style: italic; margin-bottom: 50px;">Le {{ date_facture }}</div>
+
+        <div class="section-title">Nature des prestations</div>
+        
+        <table class="content-table">
+            <thead>
+                <tr>
+                    <th>Désignation de la mission</th>
+                    <th style="text-align: right;">Honoraires</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="line-height: 1.8;">
+                        Vente des supports pédagogiques originaux<br>
+                        <span style="color: #555; font-size: 9pt;">Programme : {{ programme }} | Matière : {{ matiere }}</span><br>
+                        <span style="font-size: 8pt; font-style: italic;">(Incluant cession totale des droits d’auteur)</span>
+                    </td>
+                    <td style="text-align: right; font-size: 12pt;">{{ total_du }} €</td>
+                </tr>
+            </tbody>
+        </table>
+
+        <div class="total-section">
+            <span class="total-label">Total net à payer</span>
+            <span class="total-amount">{{ total_du }} €</span>
+        </div>
+        <div class="clear"></div>
+    </div>
+
+    <div class="footer">
+        <p style="font-weight: bold; color: #000;">Paiement à réception.</p>
+        <p>Dispense d'immatriculation au registre du commerce et des sociétés (RCS) et au répertoire des métiers (RM) conformément à l'article L123-1-1 du code de commerce.</p>
+        <p>TVA non applicable, art. 293 B du CGI.</p>
+    </div>
+
+</body>
+</html>

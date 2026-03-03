@@ -1,0 +1,232 @@
+{% extends "base.html" %}
+{% block title %}Détail Déclaration – Avicenne Pay{% endblock %}
+
+{% block content %}
+<div class="container py-3">
+    {# --- EN-TÊTE DYNAMIQUE --- #}
+    <div class="d-flex justify-content-between align-items-center mb-4 d-print-none">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item small"><a href="/declarations">Déclarations</a></li>
+                    <li class="breadcrumb-item small active">Détail #{{ declaration.id }}</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0 fw-bold">
+                <i class="bi bi-file-earmark-check text-primary me-2"></i>
+                Déclaration de {{ mois_labels[declaration.mois] }} {{ declaration.annee }}
+            </h1>
+        </div>
+        <div class="d-flex gap-2">
+            <button onclick="window.print()" class="btn btn-outline-dark shadow-sm">
+                <i class="bi bi-printer me-1"></i> Imprimer
+            </button>
+
+            {% if declaration.statut.value == 'brouillon' and (declaration.user_id == user.id or user.role.value in ['admin', 'coordo']) %}
+                <a href="/declarations/{{ declaration.id }}/edit" class="btn btn-primary shadow-sm">
+                    <i class="bi bi-pencil me-1"></i> Modifier
+                </a>
+            {% elif declaration.statut.value == 'soumise' and user.role.value in ['admin', 'coordo'] %}
+                <a href="/declarations/{{ declaration.id }}/edit" class="btn btn-outline-primary shadow-sm">
+                    <i class="bi bi-pencil me-1"></i> Ajuster les quantités
+                </a>
+            {% endif %}
+            
+            <a href="/declarations" class="btn btn-light border shadow-sm">
+                <i class="bi bi-arrow-left me-1"></i> Retour
+            </a>
+        </div>
+    </div>
+
+    {# --- ALERTE MOTIF DE REJET (VISIBLE PAR LE COLLABORATEUR) --- #}
+    {% if declaration.commentaire_admin and declaration.statut.value == 'brouillon' %}
+    <div class="alert alert-danger border-start border-4 shadow-sm mb-4 d-print-none">
+        <div class="d-flex">
+            <i class="bi bi-exclamation-octagon-fill fs-4 me-3"></i>
+            <div>
+                <h6 class="fw-bold mb-1">Correction demandée par la coordination</h6>
+                <p class="mb-0 italic text-dark">{{ declaration.commentaire_admin }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row g-4">
+        {# --- COLONNE INFOS COLLABORATEUR --- #}
+        <div class="col-lg-7">
+            <div class="card shadow-sm border-0 h-100">
+                <div class="card-body">
+                    <h5 class="card-title fw-bold mb-4">
+                        <i class="bi bi-person-badge text-primary me-2"></i>Informations du Collaborateur
+                    </h5>
+                    <div class="row g-3">
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Nom complet</label>
+                            <span class="fs-5 fw-bold text-dark">{{ declaration.user.prenom }} {{ declaration.user.nom }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Site d'affectation</label>
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-2">
+                                <i class="bi bi-geo-alt-fill me-1"></i>{{ declaration.user.site.value if declaration.user.site else 'N/A' }}
+                            </span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Programme / Cursus</label>
+                            <span class="text-dark fw-semibold">{{ declaration.user.programme.value if declaration.user.programme else 'N/A' }}</span>
+                        </div>
+                        <div class="col-sm-6">
+                            <label class="text-muted small text-uppercase fw-bold d-block">Matière / UE</label>
+                            <span class="text-primary fw-bold">{{ declaration.user.matiere or 'Non spécifiée' }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# --- COLONNE STATUT --- #}
+        <div class="col-lg-5">
+            <div class="card shadow-sm border-0 h-100 bg-light">
+                <div class="card-body text-center d-flex flex-column justify-content-center py-4">
+                    <label class="text-muted small text-uppercase fw-bold mb-3">État actuel de la demande</label>
+                    
+                    {% if declaration.statut.value == 'brouillon' %}
+                        <div class="h2 text-warning mb-2"><i class="bi bi-pencil-square"></i></div>
+                        <span class="badge bg-warning text-dark fs-6 py-2 px-4 rounded-pill mx-auto shadow-sm">BROUILLON</span>
+                        <p class="mt-3 text-muted small px-3">La déclaration est en cours de saisie ou a été renvoyée pour correction.</p>
+                    {% elif declaration.statut.value == 'soumise' %}
+                        <div class="h2 text-primary mb-2"><i class="bi bi-send-check-fill"></i></div>
+                        <span class="badge bg-primary fs-6 py-2 px-4 rounded-pill mx-auto shadow-sm">SOUMISE</span>
+                        <p class="mt-3 text-muted small px-3">Déclaration envoyée. En attente de vérification par votre coordinateur.</p>
+                    {% elif declaration.statut.value == 'validee' %}
+                        <div class="h2 text-success mb-2"><i class="bi bi-patch-check-fill"></i></div>
+                        <span class="badge bg-success fs-6 py-2 px-4 rounded-pill mx-auto shadow-sm">VALIDÉE</span>
+                        <p class="mt-3 text-muted small px-3 text-success fw-medium">Validée pour la mise en paie.</p>
+                    {% endif %}
+
+                    {% if declaration.soumise_le %}
+                        <div class="mt-3 pt-3 border-top small text-muted">
+                            <i class="bi bi-clock-history me-1"></i> Soumise le {{ declaration.soumise_le.strftime('%d/%m/%Y à %H:%M') }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {# --- ACTIONS DE VALIDATION & REJET (COORDO / ADMIN) --- #}
+    {% if user.role.value in ['admin', 'coordo'] and declaration.statut.value == 'soumise' %}
+    <div class="card border-0 shadow-lg mt-4 d-print-none overflow-hidden">
+        <div class="row g-0">
+            <div class="col-md-4 bg-primary text-white p-4 d-flex flex-column justify-content-center">
+                <h5 class="fw-bold mb-2"><i class="bi bi-shield-check me-2"></i>Coordination</h5>
+                <p class="small mb-0 opacity-75">Vérifiez les volumes avant de valider. En cas d'erreur, motivez le rejet pour aider l'intervenant.</p>
+            </div>
+            <div class="col-md-8 p-4 bg-white">
+                <div class="d-flex flex-column h-100">
+                    <form action="/declarations/{{ declaration.id }}/valider" method="post" class="mb-4">
+                        <button type="submit" class="btn btn-success w-100 py-2 fw-bold shadow-sm">
+                            <i class="bi bi-check-circle me-2"></i>Valider et envoyer en Paie
+                        </button>
+                    </form>
+
+                    <form action="/declarations/{{ declaration.id }}/rejeter" method="post" class="border-top pt-4">
+                        <div class="mb-3">
+                            <label for="commentaire_admin" class="form-label small fw-bold text-danger text-uppercase">Motif du renvoi (requis pour rejeter) :</label>
+                            <textarea name="commentaire_admin" id="commentaire_admin" class="form-control form-control-sm" rows="2" 
+                                      placeholder="Ex: Erreur sur le volume d'heures de l'UE2..." required></textarea>
+                        </div>
+                        <button type="submit" class="btn btn-outline-danger w-100">
+                            <i class="bi bi-arrow-counterclockwise me-2"></i>Renvoyer pour correction
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    {# --- TABLEAU DES ACTIVITÉS --- #}
+    <div class="card shadow-sm border-0 mt-4 overflow-hidden">
+        <div class="card-header bg-white py-3 border-bottom d-flex justify-content-between align-items-center">
+            <h5 class="mb-0 fw-bold"><i class="bi bi-list-stars me-2 text-primary"></i>Détail des prestations</h5>
+            <span class="text-muted small">ID Déclaration : #{{ declaration.id }}</span>
+        </div>
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr class="small text-muted text-uppercase">
+                        <th class="ps-4">Prestation & Code SAGE</th>
+                        <th class="text-center">Volume / Qté</th>
+                        <th class="text-end">Tarif Unit.</th>
+                        <th class="text-end pe-4">Total Ligne</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for ligne in declaration.lignes %}
+                    {% set montant_ligne = ligne.quantite * ligne.sous_mission.tarif %}
+                    <tr>
+                        <td class="ps-4 py-3">
+                            <div class="fw-bold text-dark">{{ ligne.sous_mission.titre }}</div>
+                            <div class="text-muted x-small font-monospace">
+                                {{ ligne.sous_mission.mission.titre }} | Code : {{ ligne.sous_mission.code_sage or 'N/A' }}
+                            </div>
+                        </td>
+                        <td class="text-center">
+                            <span class="fw-bold fs-6">{{ ligne.quantite }}</span>
+                            <span class="text-muted small ms-1">{{ ligne.sous_mission.unite or 'unité' }}</span>
+                        </td>
+                        <td class="text-end text-muted small">
+                            {{ "%.2f"|format(ligne.sous_mission.tarif) }} €
+                        </td>
+                        <td class="text-end fw-bold pe-4 text-primary">
+                            {{ "%.2f"|format(montant_ligne) }} €
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+                <tfoot class="border-top border-2 border-dark">
+                    <tr class="bg-dark text-white fs-5">
+                        <td colspan="3" class="text-end py-3 fw-light">MONTANT TOTAL ESTIMÉ (BRUT)</td>
+                        <td class="text-end py-3 pe-4 fw-black text-warning">
+                            {{ "%.2f"|format(total) }} €
+                        </td>
+                    </tr>
+                </tfoot>
+            </table>
+        </div>
+    </div>
+
+    {# --- ZONE DE DANGER (ADMIN SEULEMENT) --- #}
+    {% if user.role.value == 'admin' %}
+    <div class="mt-5 mb-5 d-print-none">
+        <div class="card border-danger-subtle bg-danger-subtle bg-opacity-10">
+            <div class="card-body d-flex justify-content-between align-items-center">
+                <div class="text-danger small">
+                    <i class="bi bi-exclamation-octagon-fill me-2"></i>
+                    <strong>Zone d'administration :</strong> La suppression est irréversible.
+                </div>
+                <form action="/declarations/{{ declaration.id }}/delete" method="post" onsubmit="return confirm('Confirmer la suppression définitive de cette archive ?')">
+                    <button type="submit" class="btn btn-sm btn-outline-danger px-4 fw-bold">Supprimer définitivement</button>
+                </form>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+    .fw-black { font-weight: 900; }
+    .x-small { font-size: 0.75rem; }
+    .italic { font-style: italic; }
+    
+    @media print {
+        .d-print-none { display: none !important; }
+        .card { border: 1px solid #eee !important; box-shadow: none !important; }
+        .container { width: 100% !important; max-width: none !important; margin: 0; padding: 0; }
+        body { background-color: white !important; font-size: 10pt; }
+        .table-light { background-color: #f8f9fa !important; -webkit-print-color-adjust: exact; }
+        .bg-dark { background-color: #212529 !important; color: white !important; -webkit-print-color-adjust: exact; }
+        .badge { border: 1px solid #ccc !important; color: black !important; }
+    }
+</style>
+{% endblock %}

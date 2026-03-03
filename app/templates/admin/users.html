@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Utilisateurs – Avicenne Pay{% endblock %}
+
+{% block content %}
+{# --- ENTÊTE & NAVIGATION --- #}
+<div class="mb-4 d-flex justify-content-between align-items-center">
+    <a href="/dashboard" class="btn btn-outline-primary btn-sm rounded-pill px-3 shadow-sm">
+        <i class="bi bi-grid-1x2-fill me-2"></i> 
+        <strong>Tableau de bord</strong>
+    </a>
+    <div class="d-flex align-items-center gap-3">
+        {% if current_user.role.value == "admin" %}
+        <a href="/admin/export/csv" class="btn btn-sm btn-success shadow-sm">
+            <i class="bi bi-file-earmark-spreadsheet me-1"></i> Exporter Data (CSV)
+        </a>
+        {% endif %}
+        <span class="badge bg-white text-dark border shadow-sm py-2 px-3">
+            <i class="bi bi-person-circle me-1 text-primary"></i> {{ current_user.email }}
+        </span>
+    </div>
+</div>
+
+<div class="container-fluid">
+    <div class="mb-4">
+        <h1 class="h3 mb-0 text-gray-800 fw-bold">
+            <i class="bi bi-people-fill me-2 text-primary"></i>Gestion des Utilisateurs
+        </h1>
+        <p class="text-muted small">Pilotez les accès et les profils des collaborateurs de votre périmètre.</p>
+    </div>
+
+    {# --- SECTION 1 : FORMULAIRE DE CRÉATION --- #}
+    <div class="card shadow-sm mb-5 border-0">
+        <div class="card-header bg-success text-white py-3">
+            <h5 class="mb-0 fs-6">
+                <i class="bi bi-person-plus-fill me-2"></i>
+                {% if current_user.role.value == "resp" %}Nouvel Intervenant (TCP){% else %}Nouveau Collaborateur{% endif %}
+            </h5>
+        </div>
+        <div class="card-body bg-light">
+            <form action="/admin/users/create" method="post" id="userCreateForm" class="row g-3 align-items-end">
+                
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase" style="font-size: 0.7rem;">Email</label>
+                    <input type="email" name="email" class="form-control shadow-sm" placeholder="nom@avicenne.fr" required>
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase" style="font-size: 0.7rem;">Mot de passe</label>
+                    <div class="input-group shadow-sm">
+                        <input type="password" name="password" id="passInput" class="form-control" placeholder="********" required>
+                        <button class="btn btn-outline-secondary" type="button" onclick="toggleVisibility('passInput', this)">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold text-uppercase" style="font-size: 0.7rem;">Rôle</label>
+                    <select name="role" id="roleSelect" class="form-select shadow-sm" required onchange="toggleFields()">
+                        <option value="">-- Choisir --</option>
+                        {% if current_user.role.value == "admin" %}
+                            <option value="admin">Administrateur</option>
+                            <option value="coordo">Coordinateur</option>
+                            <option value="resp">Responsable</option>
+                            <option value="tcp">TCP</option>
+                        {% elif current_user.role.value == "coordo" %}
+                            <option value="resp">Responsable</option>
+                            <option value="tcp">TCP</option>
+                        {% else %}
+                            <option value="tcp" selected>TCP</option>
+                        {% endif %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2" id="container-site">
+                    <label class="form-label small fw-bold text-uppercase" style="font-size: 0.7rem;">Site</label>
+                    {% if current_user.role.value == "admin" %}
+                        <select name="site" id="siteSelect" class="form-select shadow-sm">
+                            <option value="">-- Choisir --</option>
+                            {% for s in sites %}
+                                <option value="{{ s }}">{{ s }}</option>
+                            {% endfor %}
+                        </select>
+                    {% else %}
+                        <div class="p-2 bg-white rounded border small shadow-sm">{{ current_user.site.value }}</div>
+                        <input type="hidden" name="site" value="{{ current_user.site.value }}">
+                    {% endif %}
+                </div>
+
+                <div id="container-perimetre" class="col-md-3">
+                    <label class="form-label small fw-bold text-uppercase" style="font-size: 0.7rem;">Périmètre (Prog / Matière)</label>
+                    {% if current_user.role.value in ["admin", "coordo"] %}
+                        <div class="row g-1">
+                            <div class="col-6">
+                                <select name="programme" id="programmeSelect" class="form-select form-select-sm shadow-sm" onchange="updateMatieres()">
+                                    <option value="">Programme</option>
+                                    {% for p in programmes %}
+                                        <option value="{{ p }}">{{ p }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-6">
+                                <select name="matiere" id="matiereSelect" class="form-select form-select-sm shadow-sm">
+                                    <option value="">Matière</option>
+                                </select>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="d-flex gap-1">
+                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-2 py-2 flex-grow-1 text-truncate">
+                                <i class="bi bi-book me-1"></i> {{ current_user.programme.value }}
+                            </span>
+                            <span class="badge bg-secondary-subtle text-secondary border border-secondary-subtle px-2 py-2 flex-grow-1 text-truncate">
+                                <i class="bi bi-tag me-1"></i> {{ current_user.matiere }}
+                            </span>
+                        </div>
+                        <input type="hidden" name="programme" value="{{ current_user.programme.value }}">
+                        <input type="hidden" name="matiere" value="{{ current_user.matiere }}">
+                    {% endif %}
+                </div>
+
+                <div class="col-md-1 text-end">
+                    <button type="submit" class="btn btn-success w-100 shadow">
+                        <i class="bi bi-check-lg"></i>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    {# --- SECTION 2 : LISTE DES UTILISATEURS --- #}
+    <div class="card shadow-sm border-0 mb-3 bg-white">
+        <div class="card-body p-2">
+            <div class="input-group">
+                <span class="input-group-text bg-transparent border-0"><i class="bi bi-search text-muted"></i></span>
+                <input type="text" id="searchInput" class="form-control border-0 shadow-none" placeholder="Rechercher un collaborateur...">
+            </div>
+        </div>
+    </div>
+
+    <div class="card shadow-sm border-0 overflow-hidden">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0 align-middle" id="userTable">
+                <thead class="table-light border-bottom">
+                    <tr class="text-uppercase small fw-bold text-muted" style="font-size: 0.75rem;">
+                        <th class="ps-4 py-3">Collaborateur</th>
+                        <th>Rôle</th>
+                        <th>Affectation</th>
+                        <th>État Profil</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for u in users %}
+                    <tr>
+                        <td class="ps-4">
+                            <div class="d-flex align-items-center">
+                                <div class="avatar-sm me-3 bg-primary-subtle text-primary rounded-circle d-flex align-items-center justify-content-center fw-bold" style="width: 38px; height: 38px;">
+                                    {{ (u.prenom[0] if u.prenom else u.email[0]) | upper }}
+                                </div>
+                                <div>
+                                    <div class="fw-bold text-dark">{% if u.prenom or u.nom %}{{ u.prenom }} {{ u.nom }}{% else %}{{ u.email }}{% endif %}</div>
+                                    <div class="text-muted small">{{ u.email }}</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge {% if u.role.value == 'admin' %}bg-danger{% elif u.role.value == 'coordo' %}bg-info-subtle text-info-emphasis{% else %}bg-light text-dark border{% endif %} px-2 py-1">
+                                {{ u.role.value | upper }}
+                            </span>
+                        </td>
+                        <td>
+                            {% if u.role.value == "admin" %}
+                                <span class="text-muted small italic">Global</span>
+                            {% else %}
+                                <div class="small fw-bold">{{ u.site.value }}</div>
+                                <div class="text-muted small">{{ u.programme.value if u.programme else '' }} {% if u.matiere %}• {{ u.matiere }}{% endif %}</div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if u.role.value == 'admin' or u.profil_complete %}
+                                <span class="badge bg-success-subtle text-success border border-success-subtle">Complet</span>
+                            {% else %}
+                                <span class="badge bg-danger-subtle text-danger border border-danger-subtle">Incomplet</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="d-inline-flex align-items-center justify-content-end gap-3" style="min-width: 140px;">
+                                
+                                {# --- BOUTON MODIFIER --- #}
+                                <div class="flex-grow-1 text-end">
+                                    {% if current_user.role.value != 'resp' or u.role.value == 'tcp' %}
+                                        <a href="/admin/users/{{ u.id }}/edit" class="btn btn-sm btn-outline-primary shadow-sm px-2 py-1" title="Modifier le profil">
+                                            <i class="bi bi-pencil-square me-1"></i> Modifier
+                                        </a>
+                                    {% endif %}
+                                </div>
+
+                                {# --- BOUTON SUPPRIMER (Placeholder fixe de 32px) --- #}
+                                <div style="width: 32px;" class="d-flex justify-content-center">
+                                    {% if current_user.role.value in ['admin', 'coordo'] and u.id != current_user.id %}
+                                        <form action="/admin/users/{{ u.id }}/delete" method="post" onsubmit="return confirm('Supprimer définitivement cet utilisateur ?');" class="m-0">
+                                            <button type="submit" class="btn btn-sm btn-link text-danger p-0" title="Supprimer">
+                                                <i class="bi bi-trash3-fill fs-5"></i>
+                                            </button>
+                                        </form>
+                                    {% endif %}
+                                </div>
+                                
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+const MATIERES = {{ matieres | tojson | safe }};
+
+function toggleFields() {
+    const role = document.getElementById('roleSelect').value;
+    const containerSite = document.getElementById('container-site');
+    const containerPerimetre = document.getElementById('container-perimetre');
+    
+    if (role === 'admin') {
+        if (containerSite) containerSite.style.display = 'none';
+        if (containerPerimetre) containerPerimetre.style.display = 'none';
+    } else if (role === 'coordo') {
+        if (containerSite) containerSite.style.display = 'block';
+        if (containerPerimetre) containerPerimetre.style.display = 'none';
+    } else if (role === 'resp' || role === 'tcp') {
+        if (containerSite) containerSite.style.display = 'block';
+        if (containerPerimetre) containerPerimetre.style.display = 'block';
+    }
+}
+
+function updateMatieres() {
+    const progSel = document.getElementById('programmeSelect');
+    const matSel = document.getElementById('matiereSelect');
+    if (!progSel || !matSel) return;
+    const chosen = progSel.value;
+    matSel.innerHTML = '<option value="">Matière</option>';
+    if (chosen && MATIERES[chosen]) {
+        MATIERES[chosen].forEach(m => {
+            const o = document.createElement('option');
+            o.value = m; o.textContent = m;
+            matSel.appendChild(o);
+        });
+    }
+}
+
+function toggleVisibility(id, btn) {
+    const input = document.getElementById(id);
+    const icon = btn.querySelector('i');
+    input.type = (input.type === "password") ? "text" : "password";
+    icon.classList.toggle('bi-eye');
+    icon.classList.toggle('bi-eye-slash');
+}
+
+document.getElementById('searchInput').addEventListener('keyup', function() {
+    const filter = this.value.toLowerCase();
+    const rows = document.querySelectorAll('#userTable tbody tr');
+    rows.forEach(row => {
+        row.style.display = row.textContent.toLowerCase().includes(filter) ? '' : 'none';
+    });
+});
+
+document.addEventListener('DOMContentLoaded', toggleFields);
+</script>
+{% endblock %}

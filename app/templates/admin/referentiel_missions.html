@@ -1,0 +1,144 @@
+{% extends "base.html" %}
+
+{% block title %}Configuration du Référentiel Missions{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h1 class="h3 mb-0 text-primary"><i class="bi bi-gear-fill me-2"></i>Référentiel des Missions</h1>
+            <p class="text-muted small mb-0">Configurez les missions et tarifs que les intervenants pourront déclarer.</p>
+        </div>
+        <button class="btn btn-primary shadow-sm" data-bs-toggle="modal" data-bs-target="#modalAddMission">
+            <i class="bi bi-plus-lg me-2"></i>Nouvelle Mission Parent
+        </button>
+    </div>
+
+    {# --- LISTE DES MISSIONS EN ACCORDÉON --- #}
+    <div class="accordion shadow-sm" id="accordionMissions">
+        {% for mission in missions %}
+        <div class="accordion-item border-0 mb-2 shadow-sm rounded overflow-hidden">
+            <h2 class="accordion-header" id="heading{{ mission.id }}">
+                <button class="accordion-button collapsed bg-light fw-bold" type="button" data-bs-toggle="collapse" data-bs-target="#collapse{{ mission.id }}">
+                    <i class="bi bi-folder2-open me-2 text-primary"></i> {{ mission.titre }} 
+                    <span class="badge bg-secondary ms-2">{{ mission.sous_missions|length }} sous-missions</span>
+                </button>
+            </h2>
+            <div id="collapse{{ mission.id }}" class="accordion-collapse collapse" data-bs-parent="#accordionMissions">
+                <div class="accordion-body bg-white">
+                    
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h6 class="text-uppercase small fw-bold text-muted mb-0">Sous-missions & Tarifs</h6>
+                        <button class="btn btn-outline-primary btn-sm" onclick="openAddSubMission('{{ mission.id }}', '{{ mission.nom }}')">
+                            <i class="bi bi-plus"></i> Ajouter une ligne
+                        </button>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle">
+                            <thead class="table-light">
+                                <tr class="small">
+                                    <th>Libellé de la sous-mission</th>
+                                    <th class="text-center">Tarif Horaire</th>
+                                    <th class="text-center">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for sm in mission.sous_missions %}
+                                <tr>
+                                    <td class="fw-semibold">{{ sm.titre }}</td>
+                                    <td class="text-center">
+                                        <span class="badge bg-success-subtle text-success px-3 py-2">
+                                            {{ sm.tarif }} € / h
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group btn-group-sm">
+                                            <button class="btn btn-outline-secondary" title="Modifier"><i class="bi bi-pencil"></i></button>
+                                            <button class="btn btn-outline-danger" title="Supprimer"><i class="bi bi-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr>
+                                    <td colspan="3" class="text-center text-muted py-3 small italic">Aucune sous-mission configurée pour ce parent.</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{# --- MODALE : AJOUT MISSION PARENT --- #}
+<div class="modal fade" id="modalAddMission" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/admin/referentiel/mission/add" method="post" class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Créer une Mission Parent</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <label class="form-label">Nom de la Mission (ex: Soutien Scolaire)</label>
+                    <input type="text" name="nom" class="form-control" placeholder="Entrez le titre..." required>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-primary">Créer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{# --- MODALE : AJOUT SOUS-MISSION --- #}
+<div class="modal fade" id="modalAddSubMission" tabindex="-1">
+    <div class="modal-dialog">
+        <form action="/admin/referentiel/sub-mission/add" method="post" class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">Nouvelle Sous-mission pour <span id="parentNameDisplay" class="text-info"></span></h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <input type="hidden" name="parent_id" id="parentIdInput">
+                <div class="mb-3">
+                    <label class="form-label">Nom de la sous-mission (ex: Français - Primaire)</label>
+                    <input type="text" name="nom" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Tarif Horaire (€)</label>
+                    <div class="input-group">
+                        <input type="number" name="tarif" step="0.01" class="form-control" required>
+                        <span class="input-group-text">€ / h</span>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Annuler</button>
+                <button type="submit" class="btn btn-success">Enregistrer</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openAddSubMission(parentId, parentName) {
+    document.getElementById('parentIdInput').value = parentId;
+    document.getElementById('parentNameDisplay').innerText = parentName;
+    new bootstrap.Modal(document.getElementById('modalAddSubMission')).show();
+}
+</script>
+
+<style>
+    .accordion-button:not(.collapsed) {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+    }
+    .accordion-item { border: 1px solid #dee2e6 !important; }
+</style>
+{% endblock %}

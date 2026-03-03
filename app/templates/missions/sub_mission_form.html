@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if sous_mission %}Modifier{% else %}Nouvelle{% endif %} sous-mission – Avicenne Pay
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/missions">Missions</a></li>
+                <li class="breadcrumb-item active">{% if sous_mission %}Édition{% else %}Création{% endif %}</li>
+            </ol>
+        </nav>
+
+        <h1 class="h3 mb-3">
+            {% if sous_mission %}
+                <i class="bi bi-pencil-square text-primary"></i> Modifier la sous-mission
+            {% else %}
+                <i class="bi bi-plus-circle-fill text-success"></i> Nouvelle sous-mission
+            {% endif %}
+        </h1>
+
+        {% if mission %}
+        <div class="alert alert-info border-0 shadow-sm mb-4">
+            <i class="bi bi-info-circle-fill me-2"></i>
+            Rattachée à : <strong>{{ mission.titre }}</strong>
+        </div>
+        {% endif %}
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="/missions/{{ mission.id }}/sous-missions/{% if sous_mission %}{{ sous_mission.id }}/edit{% else %}new{% endif %}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Libellé de la prestation *</label>
+                        <input type="text" name="titre" class="form-control form-control-lg" 
+                               placeholder="Ex: LVL 1 - Pas ou peu de changements"
+                               value="{{ sous_mission.titre if sous_mission else '' }}" required>
+                        <div class="form-text">Ce libellé apparaîtra tel quel sur la déclaration du vacataire.</div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Tarif unitaire (€) *</label>
+                            <div class="input-group">
+                                <span class="input-group-text">€</span>
+                                <input type="number" name="tarif" class="form-control" step="0.5" 
+                                       value="{{ sous_mission.tarif if sous_mission else '' }}" required>
+                            </div>
+                        </div>
+
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Unité de facturation *</label>
+                            <select class="form-select" name="unite" required>
+                                <option value="" {% if not sous_mission or not sous_mission.unite %}selected{% endif %} disabled>
+                                    -- Sélectionner --
+                                </option>
+                                
+                                {# On boucle sur les unités de constants.py (passées par le routeur) #}
+                                {% if unites_disponibles %}
+                                    {% for choix in unites_disponibles %}
+                                        <option value="{{ choix }}" 
+                                            {% if sous_mission and sous_mission.unite == choix %}selected{% endif %}>
+                                            {{ choix }}
+                                        </option>
+                                    {% endfor %}
+                                {% else %}
+                                    {# Fallback si la liste n'est pas passée #}
+                                    <option value="par heure" {% if sous_mission and sous_mission.unite == 'par heure' %}selected{% endif %}>par heure</option>
+                                    <option value="par support (MAP)" {% if sous_mission and sous_mission.unite == 'par support (MAP)' %}selected{% endif %}>par support (MAP)</option>
+                                {% endif %}
+
+                                {# Sécurité pour les unités importées hors liste standard #}
+                                {% if sous_mission and sous_mission.unite and sous_mission.unite not in unites_disponibles %}
+                                    <hr>
+                                    <option value="{{ sous_mission.unite }}" selected>{{ sous_mission.unite }} (Valeur actuelle)</option>
+                                {% endif %}
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Ordre d'affichage</label>
+                            <input type="number" name="ordre" class="form-control" 
+                                   value="{{ sous_mission.ordre if sous_mission else 0 }}">
+                        </div>
+
+                        <div class="col-md-6 mb-4 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input type="checkbox" name="is_active" class="form-check-input" id="isActive"
+                                    {% if sous_mission is none or sous_mission.is_active %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="isActive">Sous-mission active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-check-lg"></i> Enregistrer
+                        </button>
+                        <a href="/missions" class="btn btn-light px-4 border">
+                            Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

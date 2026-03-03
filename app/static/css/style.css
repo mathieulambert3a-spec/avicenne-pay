@@ -1,0 +1,64 @@
+/* Variables de couleurs personnalisées pour Avicenne */
+:root {
+    --primary-color: #0d6efd;
+    --bg-light: #f8f9fa;
+}
+
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Navbar */
+.navbar {
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+}
+.navbar-brand {
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+}
+
+/* Cartes (Cards) */
+.card {
+    border: none;
+    border-radius: 0.75rem; /* Un peu plus arrondi pour un look moderne */
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+/* Ombre légère pour les cartes de stats */
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+}
+
+/* Styles pour les tableaux de stats */
+.table thead th {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: #6c757d;
+    border-bottom-width: 1px;
+}
+
+/* Badges */
+.badge {
+    font-weight: 500;
+    padding: 0.4em 0.7em;
+}
+
+/* Footer */
+footer {
+    background-color: #ffffff;
+    border-top: 1px solid #e9ecef;
+}
+
+/* Print : Masquer la navbar à l'impression */
+@media print {
+    .navbar, .btn, footer {
+        display: none !important;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+    }
+}

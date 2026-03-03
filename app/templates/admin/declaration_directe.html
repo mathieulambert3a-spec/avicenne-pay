@@ -1,0 +1,108 @@
+{% extends "base.html" %}
+
+{% block title %}Saisie Assistée – {{ target_user.prenom }} {{ target_user.nom }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    {# --- ENTÊTE DE NAVIGATION --- #}
+    <div class="mb-4">
+        <a href="/admin/users" class="btn btn-outline-secondary btn-sm shadow-sm">
+            <i class="bi bi-arrow-left me-2"></i>Retour à la liste
+        </a>
+    </div>
+
+    {# --- RÉCAPITULATIF CIBLE --- #}
+    <div class="card border-0 shadow-sm mb-4 bg-primary text-white">
+        <div class="card-body d-flex align-items-center gap-4">
+            <div class="rounded-circle bg-white text-primary d-flex align-items-center justify-content-center fw-bold" style="width: 60px; height: 60px; font-size: 1.5rem;">
+                {{ target_user.prenom[0] | upper }}{{ target_user.nom[0] | upper }}
+            </div>
+            <div>
+                <h2 class="h4 mb-1">Saisie de déclaration pour <strong>{{ target_user.prenom }} {{ target_user.nom }}</strong></h2>
+                <p class="mb-0 opacity-75">
+                    <i class="bi bi-geo-alt-fill me-1"></i> {{ target_user.site.value }} | 
+                    <i class="bi bi-book-half me-1"></i> {{ target_user.programme.value }} - {{ target_user.matiere }}
+                </p>
+            </div>
+        </div>
+    </div>
+
+    {# --- FORMULAIRE DE SAISIE --- #}
+    <div class="card shadow-sm border-0">
+        <form action="/admin/declarations/save" method="post" class="card-body p-4">
+            <input type="hidden" name="user_id" value="{{ target_user.id }}">
+
+            <div class="row mb-4 align-items-end">
+                <div class="col-md-4">
+                    <label class="form-label fw-bold text-uppercase small">Date de la prestation</label>
+                    <input type="date" name="date_declaration" class="form-control form-control-lg border-primary shadow-sm" required value="{{ today_date }}">                </div>
+                <div class="col-md-8 text-end">
+                    <span class="badge bg-light text-dark border p-2">
+                        Saisie par : {{ current_user.email }} ({{ current_user.role.value }})
+                    </span>
+                </div>
+            </div>
+
+            <hr class="my-4">
+
+            <div class="table-responsive">
+                <table class="table table-hover align-middle">
+                    <thead class="table-light">
+                        <tr class="small text-muted">
+                            <th style="width: 40%;">Mission / Sous-Mission</th>
+                            <th class="text-center" style="width: 20%;">Tarif Horaire</th>
+                            <th class="text-center" style="width: 30%;">Volume (en Heures)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for mission in missions %}
+                            <tr class="table-group-divider">
+                                <td colspan="3" class="bg-light fw-bold py-2">
+                                    <i class="bi bi-folder2-open me-2 text-primary"></i>{{ mission.nom }}
+                                </td>
+                            </tr>
+                            {% for sm in mission.sous_missions %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-semibold">{{ sm.nom }}</div>
+                                    <div class="text-muted small">{{ sm.description or "" }}</div>
+                                </td>
+                                <td class="text-center">
+                                    <span class="badge bg-secondary-subtle text-secondary px-3 py-2">
+                                        {{ sm.tarif }} € / h
+                                    </span>
+                                </td>
+                                <td class="text-center">
+                                    <div class="input-group input-group-sm mx-auto" style="max-width: 150px;">
+                                        <input type="hidden" name="mission_ids" value="{{ sm.id }}">
+                                        <input type="number" name="quantites" step="0.25" min="0" value="0" class="form-control text-center border-primary fw-bold" placeholder="0.0">
+                                        <span class="input-group-text bg-primary text-white">h</span>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="mt-5 d-grid gap-2 d-md-flex justify-content-md-end">
+                <a href="/admin/users" class="btn btn-light px-5">Annuler</a>
+                <button type="submit" class="btn btn-success px-5 shadow">
+                    <i class="bi bi-check-circle-fill me-2"></i>Enregistrer la déclaration
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<style>
+    /* Style pour mettre en évidence les lignes quand on survole */
+    .table-hover tbody tr:hover {
+        background-color: #f8f9ff !important;
+    }
+    input[type=number]::-webkit-inner-spin-button {
+        opacity: 1;
+    }
+</style>
+{% endblock %}

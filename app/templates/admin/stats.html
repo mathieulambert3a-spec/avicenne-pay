@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="h3 mb-0 text-gray-800">Tableau de Bord Statistiques</h1>
+        <button onclick="window.print()" class="btn btn-sm btn-outline-primary">
+            <i class="fas fa-download fa-sm"></i> Imprimer le rapport
+        </button>
+    </div>
+
+    <div class="row">
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Répartition par Site (€)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="chart-pie pt-4 pb-2">
+                        <canvas id="siteChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Top 10 des Intervenants (Montant Brut)</h6>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Intervenant</th>
+                                    <th>Site</th>
+                                    <th class="text-center">Heures</th>
+                                    <th class="text-end">Montant Brut</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for row in stats_users %}
+                                {% set u = row[0] %}
+                                <tr>
+                                    <td>
+                                        <div class="fw-bold">{{ u.email.split('@')[0]|capitalize }}</div>
+                                        <small class="text-muted">{{ u.role.value }}</small>
+                                    </td>
+                                    <td>{{ u.site.value if u.site else '-' }}</td>
+                                    <td class="text-center">{{ "%.2f"|format(row[2]) }}h</td>
+                                    <td class="text-end fw-bold text-success">{{ "%.2f"|format(row[1]) }} €</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+    // Préparation des données depuis le backend
+    const siteLabels = [{% for s in stats_sites %}"{{ s[0].value if s[0] else 'Inconnu' }}",{% endfor %}];
+    const siteData = [{% for s in stats_sites %}{{ s[1] }},{% endfor %}];
+
+    const ctx = document.getElementById('siteChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: siteLabels,
+            datasets: [{
+                data: siteData,
+                backgroundColor: ['#4e73df', '#1cc88a', '#36b9cc', '#f6c23e', '#e74a3b'],
+                hoverBackgroundColor: ['#2e59d9', '#17a673', '#2c9faf', '#dda20a', '#be2617'],
+                hoverBorderColor: "rgba(234, 236, 244, 1)",
+            }],
+        },
+        options: {
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { position: 'bottom' }
+            },
+            cutout: '70%',
+        },
+    });
+</script>
+{% endblock %}

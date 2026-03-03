@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Périmètre de missions - {{ target_user.email }}{% endblock %}
+
+{% block content %}
+<div class="container py-4">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/users" class="text-decoration-none">Gestion des Utilisateurs</a></li>
+            <li class="breadcrumb-item active">Périmètre sur mesure</li>
+        </ol>
+    </nav>
+
+    <div class="card shadow-sm border-0 mb-4">
+        <div class="card-body bg-light d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="h4 mb-1">
+                    <i class="bi bi-shield-lock-fill text-warning me-2"></i>
+                    Configuration du périmètre
+                </h2>
+                <p class="text-muted mb-0">
+                    Collaborateur : <strong>{{ target_user.prenom or '' }} {{ target_user.nom or '' }}</strong> 
+                    <span class="badge bg-secondary ms-2">{{ target_user.email }}</span>
+                </p>
+            </div>
+            <div class="text-end">
+                <span class="small text-muted d-block">Rôle : {{ target_user.role.value|upper if target_user.role else '-' }}</span>
+                <span class="small text-muted d-block">Site : {{ target_user.site.value if target_user.site else '-' }}</span>
+            </div>
+        </div>
+    </div>
+
+    <form method="post">
+        {% for mission in all_missions %}
+        <div class="card mb-4 border-0 shadow-sm overflow-hidden border-start border-4 {% if mission.id in current_permissions_ids %}border-success{% else %}border-secondary{% endif %}">
+            
+            <div class="card-header bg-dark text-white py-3 d-flex justify-content-between align-items-center">
+                <h5 class="mb-0 small text-uppercase fw-bold">
+                    <i class="bi bi-folder2-open me-2"></i> {{ mission.titre }}
+                </h5>
+                <div class="form-check form-switch">
+                    <input class="form-check-input custom-switch" type="checkbox" 
+                           name="mission_ids" value="{{ mission.id }}" 
+                           id="m-{{ mission.id }}"
+                           {% if mission.id in current_permissions_ids %}checked{% endif %}>
+                    <label class="form-check-label small fw-bold" for="m-{{ mission.id }}">
+                        ACTIVER
+                    </label>
+                </div>
+            </div>
+
+            <div class="card-body bg-white">
+                <div class="mb-3">
+                    <span class="badge bg-info text-dark small">
+                        <i class="bi bi-info-circle me-1"></i> 
+                        L'activation autorise l'accès aux {{ mission.sous_missions|length }} composantes ci-dessous :
+                    </span>
+                </div>
+                
+                <div class="row g-3">
+                    {% for sm in mission.sous_missions %}
+                    <div class="col-md-6 col-lg-4">
+                        <div class="p-3 border rounded h-100 bg-light-subtle d-flex align-items-start shadow-sm">
+                            <i class="bi bi-check-circle-fill text-success me-3 mt-1"></i>
+                            <div>
+                                <div class="fw-bold text-dark small">{{ sm.titre }}</div>
+                                <div class="text-muted" style="font-size: 0.85rem;">
+                                    Tarif : <span class="fw-semibold text-primary">{{ "%.2f"|format(sm.tarif) }} €</span> / {{ sm.unite }}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+        {% else %}
+        <div class="alert alert-info shadow-sm text-center py-5">
+            <i class="bi bi-cloud-slash display-4 d-block mb-3"></i>
+            Aucune mission n'est actuellement configurée dans le catalogue.
+        </div>
+        {% endfor %}
+
+        <div class="sticky-footer bg-white p-3 border-top shadow-lg d-flex justify-content-between align-items-center mt-5 rounded-top">
+            <a href="/users" class="btn btn-outline-secondary px-4">
+                <i class="bi bi-arrow-left me-2"></i>Retour
+            </a>
+            <div>
+                <button type="submit" class="btn btn-success btn-lg px-5 shadow fw-bold">
+                    <i class="bi bi-save2 me-2"></i>Enregistrer les droits
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    /* Style personnalisé pour les cartes */
+    .bg-light-subtle {
+        background-color: #f8f9fa;
+        transition: transform 0.2s;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        transition: all 0.3s ease;
+    }
+
+    /* Custom switch styling */
+    .custom-switch {
+        width: 3rem !important;
+        height: 1.5rem !important;
+        cursor: pointer;
+    }
+
+    .form-check-input:checked {
+        background-color: #198754;
+        border-color: #198754;
+    }
+
+    /* Footer collant en bas de page */
+    .sticky-footer {
+        position: sticky;
+        bottom: 0;
+        z-index: 1020;
+        margin-left: -1rem;
+        margin-right: -1rem;
+        border-top: 2px solid #dee2e6;
+    }
+
+    .breadcrumb-item + .breadcrumb-item::before {
+        content: "›";
+        font-size: 1.2rem;
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}

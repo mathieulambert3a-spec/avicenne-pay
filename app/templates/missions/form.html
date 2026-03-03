@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if mission %}Modifier{% else %}Nouvelle{% endif %} mission – Avicenne Pay
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        
+        <nav aria-label="breadcrumb" class="mb-4">
+            <ol class="breadcrumb">
+                <li class="breadcrumb-item"><a href="/missions">Missions</a></li>
+                <li class="breadcrumb-item active" aria-current="page">
+                    {% if mission %}Édition{% else %}Création{% endif %}
+                </li>
+            </ol>
+        </nav>
+
+        <h1 class="h3 mb-4">
+            {% if mission %}
+                <i class="bi bi-pencil-square text-primary"></i> Modifier la mission
+            {% else %}
+                <i class="bi bi-plus-circle-fill text-success"></i> Nouvelle catégorie de mission
+            {% endif %}
+        </h1>
+
+        <div class="card shadow-sm border-0">
+            <div class="card-body p-4">
+                <form method="post" action="/missions/{% if mission %}{{ mission.id }}/edit{% else %}new{% endif %}">
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-bold">Titre de la mission *</label>
+                        <input type="text" name="titre" class="form-control form-control-lg" 
+                               placeholder="Ex: Rédiger et mettre en page les supports"
+                               value="{{ mission.titre if mission else '' }}" required>
+                        <div class="form-text">Ce titre regroupera vos différentes sous-missions (LVL 1, LVL 2, etc.).</div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-4">
+                            <label class="form-label fw-bold">Ordre d'affichage</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="bi bi-sort-numeric-down"></i></span>
+                                <input type="number" name="ordre" class="form-control" 
+                                       value="{{ mission.ordre if mission else 0 }}">
+                            </div>
+                            <div class="form-text">Définit la position dans la liste.</div>
+                        </div>
+
+                        <div class="col-md-6 mb-4 d-flex align-items-end">
+                            <div class="form-check form-switch mb-2">
+                                <input type="checkbox" name="is_active" class="form-check-input" id="isActive"
+                                    {% if mission is none or mission.is_active %}checked{% endif %}>
+                                <label class="form-check-label fw-bold" for="isActive">Mission active</label>
+                            </div>
+                        </div>
+                    </div>
+
+                    {% if mission %}
+                    <div class="alert alert-light border mb-4 small">
+                        <i class="bi bi-info-circle me-1"></i> 
+                        Toute modification du titre impactera l'affichage des déclarations en cours.
+                    </div>
+                    {% endif %}
+
+                    <hr class="my-4">
+
+                    <div class="d-flex gap-3">
+                        <button type="submit" class="btn btn-primary px-4">
+                            <i class="bi bi-save"></i> Enregistrer
+                        </button>
+                        <a href="/missions" class="btn btn-light px-4 border">
+                            Annuler
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if mission and mission.sous_missions %}
+        <div class="mt-4 p-3 bg-light rounded border">
+            <p class="mb-0 small text-muted">
+                <i class="bi bi-layers"></i> Cette mission contient actuellement <strong>{{ mission.sous_missions|length }}</strong> sous-mission(s).
+            </p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

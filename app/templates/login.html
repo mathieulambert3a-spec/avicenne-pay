@@ -1,0 +1,31 @@
+{% extends "base.html" %}
+{% block title %}Connexion – Avicenne Pay{% endblock %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-5 col-lg-4">
+        <div class="card shadow-sm mt-5">
+            <div class="card-body p-4">
+                <h2 class="card-title text-center mb-4">
+                    <i class="bi bi-currency-euro text-primary"></i><br>Avicenne Pay
+                </h2>
+                {% if error %}
+                <div class="alert alert-danger py-2">{{ error }}</div>
+                {% endif %}
+                <form method="post" action="/login">
+                    <div class="mb-3">
+                        <label class="form-label">Adresse email</label>
+                        <input type="email" name="email" class="form-control" required autofocus>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Mot de passe</label>
+                        <input type="password" name="password" class="form-control" required>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-box-arrow-in-right"></i> Connexion
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

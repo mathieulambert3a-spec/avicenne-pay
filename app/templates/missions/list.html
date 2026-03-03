@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}Gestion des Missions – Avicenne Pay{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h1><i class="bi bi-briefcase-fill text-primary"></i> Missions & Tarifs</h1>
+    <a href="/missions/new" class="btn btn-primary shadow-sm">
+        <i class="bi bi-plus-circle"></i> Nouvelle mission
+    </a>
+</div>
+
+{# --- Messages d'alerte (Flash) --- #}
+{% set error = request.query_params.get('error') %}
+{% if error %}
+<div class="alert alert-warning alert-dismissible fade show shadow-sm border-start border-4 border-warning" role="alert">
+    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+    {% if error == 'historique_existant' %}
+        <strong>Mission conservée :</strong> Cette mission est liée à des déclarations passées. Elle a été <strong>désactivée</strong> pour préserver l'historique.
+    {% elif error == 'sub_historique_existant' %}
+        <strong>Sous-mission archivée :</strong> Impossible de supprimer une prestation déjà facturée. Son statut est passé en <strong>Inactif</strong>.
+    {% endif %}
+    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+</div>
+{% endif %}
+
+{% if not missions %}
+<div class="text-center py-5">
+    <i class="bi bi-inbox text-muted" style="font-size: 3rem;"></i>
+    <p class="mt-3 text-muted">Aucune mission configurée. Commencez par en créer une ou importez l'Excel.</p>
+</div>
+{% endif %}
+
+{% for mission in missions %}
+<div class="card mb-4 shadow-sm border-0 {% if not mission.is_active %}opacity-75{% endif %}">
+    <div class="card-header bg-white py-3 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center">
+            <span class="badge bg-light text-primary border me-3">Ordre {{ mission.ordre }}</span>
+            <h5 class="mb-0 {% if not mission.is_active %}text-muted{% endif %}">
+                {{ mission.titre }}
+                {% if not mission.is_active %}
+                <small class="badge bg-secondary-subtle text-secondary border ms-2">Hors ligne</small>
+                {% endif %}
+            </h5>
+        </div>
+        <div class="btn-group shadow-sm">
+            {% if mission.is_active %}
+            <a href="/missions/{{ mission.id }}/sous-missions/new" class="btn btn-sm btn-outline-success" title="Ajouter une prestation">
+                <i class="bi bi-plus-lg"></i>
+            </a>
+            {% endif %}
+            <a href="/missions/{{ mission.id }}/edit" class="btn btn-sm btn-outline-primary" title="Modifier le titre">
+                <i class="bi bi-pencil"></i>
+            </a>
+            <form method="post" action="/missions/{{ mission.id }}/delete" class="d-inline" 
+                  onsubmit="return confirm('Supprimer cette mission ? (Si elle est utilisée, elle sera simplement désactivée)')">
+                <button type="submit" class="btn btn-sm btn-outline-danger">
+                    <i class="bi bi-trash"></i>
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-body p-0">
+        {% if mission.sous_missions %}
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="ps-4" style="width: 80px;">Ordre</th>
+                        <th>Prestation (Sous-mission)</th>
+                        <th>Tarif</th>
+                        <th>Unité</th>
+                        <th class="text-center">Statut</th>
+                        <th class="text-end pe-4">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for sm in mission.sous_missions|sort(attribute='ordre') %}
+                    <tr class="{% if not sm.is_active %}table-light text-muted{% endif %}">
+                        <td class="ps-4 text-center"><small class="text-muted">{{ sm.ordre }}</small></td>
+                        <td>
+                            <span class="fw-medium">{{ sm.titre }}</span>
+                        </td>
+                        <td><span class="badge bg-primary-subtle text-primary fw-bold">{{ "%.2f"|format(sm.tarif) }} €</span></td>
+                        <td>
+                            <span class="text-nowrap"><i class="bi bi-tag small me-1"></i>{{ sm.unite or 'Unité' }}</span>
+                        </td>
+                        <td class="text-center">
+                            {% if sm.is_active %}
+                                <span class="badge rounded-pill bg-success-subtle text-success border border-success-subtle">Actif</span>
+                            {% else %}
+                                <span class="badge rounded-pill bg-light text-muted border">Inactif</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-end pe-4">
+                            <div class="btn-group">
+                                <a href="/missions/{{ mission.id }}/sous-missions/{{ sm.id }}/edit" class="btn btn-sm btn-light border">
+                                    <i class="bi bi-pencil text-primary"></i>
+                                </a>
+                                <form method="post" action="/missions/{{ mission.id }}/sous-missions/{{ sm.id }}/delete" class="d-inline"
+                                      onsubmit="return confirm('Confirmer la suppression ou l\'archivage ?')">
+                                    <button type="submit" class="btn btn-sm btn-light border">
+                                        <i class="bi bi-trash text-danger"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <div class="p-4 text-center">
+            <p class="text-muted mb-0 small"><i class="bi bi-info-circle me-1"></i> Aucune sous-mission définie pour cette catégorie.</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endfor %}
+
+{% endblock %}

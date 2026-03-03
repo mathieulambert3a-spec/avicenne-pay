@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if edit_user %}Modifier {{ edit_user.email }}{% else %}Nouvel Utilisateur{% endif %} – Avicenne
+{% block content %}
+
+<div class="container py-5">
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            
+            {# --- FIL D'ARIANE / RETOUR --- #}
+            <nav aria-label="breadcrumb" class="mb-4">
+                <a href="/admin/users" class="text-decoration-none text-muted">
+                    <i class="bi bi-arrow-left"></i> Retour à la liste des utilisateurs
+                </a>
+            </nav>
+
+            <div class="card shadow-sm border-0">
+                <div class="card-header bg-white border-bottom py-3">
+                    <h1 class="h4 mb-0 fw-bold">
+                        {% if edit_user %}
+                            <i class="bi bi-pencil-square text-primary me-2"></i> Modifier le profil
+                        {% else %}
+                            <i class="bi bi-person-plus-fill text-success me-2"></i> Créer un nouvel utilisateur
+                        {% endif %}
+                    </h1>
+                </div>
+
+                <div class="card-body p-4">
+                    <form method="post" action="/admin/users/{% if edit_user %}{{ edit_user.id }}/edit{% else %}create{% endif %}">
+                        
+                        {# --- SECTION 1 : ACCÈS --- #}
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-uppercase small fw-bold text-muted mb-3 border-bottom pb-2">Identifiants de connexion</h5>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">Adresse Email *</label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-envelope"></i></span>
+                                    <input type="email" name="email" class="form-control" value="{{ edit_user.email if edit_user else '' }}" required placeholder="nom@exemple.com">
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label class="form-label fw-semibold">
+                                    Mot de passe 
+                                    {% if edit_user %}<span class="badge bg-light text-muted fw-normal">Optionnel</span>{% else %}*{% endif %}
+                                </label>
+                                <div class="input-group">
+                                    <span class="input-group-text bg-light"><i class="bi bi-lock"></i></span>
+                                    <input type="password" name="password" class="form-control" {% if not edit_user %}required{% endif %} minlength="8" placeholder="********">
+                                </div>
+                                {% if edit_user %}
+                                <div class="form-text small text-info">Laissez vide pour conserver le mot de passe actuel.</div>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {# --- SECTION 2 : DROITS ET AFFECTATION --- #}
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-uppercase small fw-bold text-muted mb-3 border-bottom pb-2">Rôle et Périmètre d'action</h5>
+                            </div>
+                            
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Rôle attribué *</label>
+                                <select name="role" class="form-select border-primary-subtle" required>
+                                    {% for r in roles %}
+                                    <option value="{{ r.value }}" {% if edit_user and edit_user.role == r %}selected{% endif %}>
+                                        {{ r.value | upper }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Site</label>
+                                <select name="site" class="form-select">
+                                    <option value="">-- Aucun site --</option>
+                                    {% for s in sites %}
+                                    <option value="{{ s.value }}" {% if edit_user and edit_user.site == s %}selected{% endif %}>
+                                        {{ s.value }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label fw-semibold">Programme</label>
+                                <select name="programme" class="form-select">
+                                    <option value="">-- Aucun programme --</option>
+                                    {% for p in programmes %}
+                                    <option value="{{ p.value }}" {% if edit_user and edit_user.programme == p %}selected{% endif %}>
+                                        {{ p.value }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+
+                            <div class="col-md-12 mb-3">
+                                <label class="form-label fw-semibold">Matière Spécifique</label>
+                                <input type="text" name="matiere" class="form-control" value="{{ edit_user.matiere if edit_user and edit_user.matiere else '' }}" placeholder="Ex: UE_1, Biophysique, Droit...">
+                                <div class="form-text italic">Saisir le nom exact tel que défini dans le référentiel.</div>
+                            </div>
+                        </div>
+
+                        {# --- SECTION 3 : INFOS ADMINISTRATIVES (Lecture seule ou info) --- #}
+                        {% if edit_user %}
+                        <div class="row mb-4">
+                            <div class="col-md-12">
+                                <h5 class="text-uppercase small fw-bold text-muted mb-3 border-bottom pb-2">Informations de profil (Récapitulatif)</h5>
+                                <div class="bg-light p-3 rounded border">
+                                    <div class="row">
+                                        <div class="col-md-6 mb-2"><strong>NSS :</strong> {{ nss if nss else 'Non renseigné' }}</div>
+                                        <div class="col-md-6 mb-2"><strong>IBAN :</strong> {{ iban if iban else 'Non renseigné' }}</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <hr class="my-4">
+
+                        <div class="d-flex justify-content-between align-items-center">
+                            <a href="/admin/users" class="btn btn-light px-4 border text-secondary">
+                                Annuler
+                            </a>
+                            <button type="submit" class="btn btn-primary px-5 shadow">
+                                <i class="bi bi-save2 me-2"></i> 
+                                {% if edit_user %}Enregistrer les modifications{% else %}Créer l'utilisateur{% endif %}
+                            </button>
+                        </div>
+
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-label { font-size: 0.9rem; }
+    .input-group-text { color: #6c757d; }
+    .form-select, .form-control { border-radius: 0.4rem; padding: 0.6rem 0.75rem; }
+</style>
+
+{% endblock %}

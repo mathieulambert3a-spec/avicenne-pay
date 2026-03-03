@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+
+{% block title %}{% if declaration %}Modifier{% else %}Nouvelle{% endif %} déclaration – Avicenne Pay{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    {# --- EN-TÊTE ET RÉCAPITULATIF FINANCIER --- #}
+    <div class="d-flex justify-content-between align-items-end mb-4 bg-white p-3 rounded shadow-sm border-start border-4 border-primary">
+        <div>
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb mb-1">
+                    <li class="breadcrumb-item small"><a href="/declarations">Déclarations</a></li>
+                    <li class="breadcrumb-item small active">Saisie</li>
+                </ol>
+            </nav>
+            <h1 class="h3 mb-0 fw-bold">
+                {% if declaration %}
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Modifier la déclaration
+                {% else %}
+                    <i class="bi bi-plus-circle-fill text-success me-2"></i>Nouvelle déclaration
+                {% endif %}
+            </h1>
+        </div>
+        <div class="text-end">
+            <span class="badge bg-primary-subtle text-primary border border-primary-subtle mb-2 d-inline-block px-3">
+                <i class="bi bi-person-circle me-1"></i> {{ user.prenom }} {{ user.nom }}
+            </span>
+            <div class="h4 mb-0 text-success fw-bold">
+                <span class="text-muted small fw-normal">Total estimé :</span> <span id="totalAmount">0,00 €</span>
+            </div>
+        </div>
+    </div>
+
+    {# --- ALERTE SI REJETÉE (MOTIF DE L'ADMIN) --- #}
+    {% if declaration and declaration.commentaire_admin %}
+    <div class="alert alert-danger border-start border-4 shadow-sm mb-4">
+        <div class="d-flex align-items-center">
+            <i class="bi bi-exclamation-octagon-fill fs-3 me-3"></i>
+            <div>
+                <h6 class="fw-bold mb-1">Modifications demandées par la coordination :</h6>
+                <p class="mb-0 italic">{{ declaration.commentaire_admin }}</p>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/declarations/{% if declaration %}{{ declaration.id }}/edit{% else %}new{% endif %}">
+        
+        {# --- CONFIGURATION PÉRIODE --- #}
+        <div class="card mb-4 border-0 shadow-sm">
+            <div class="card-body bg-light rounded border">
+                <div class="row g-3">
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Mois de la mission</label>
+                        <select name="mois" class="form-select border-primary-subtle shadow-sm" {% if declaration %}disabled{% endif %}>
+                            {% for num, label in mois_labels.items() %}
+                                {# MODIFICATION ICI : On désactive les mois déjà saisis (sauf en modification) #}
+                                <option value="{{ num }}" 
+                                    {% if default_mois == num %}selected{% endif %}
+                                    {% if num in mois_interdits and not declaration %}disabled{% endif %}>
+                                    {{ label }} {% if num in mois_interdits and not declaration %}(Déjà saisi){% endif %}
+                                </option>
+                            {% endfor %}
+                        </select>
+                        {# Champ caché car le select disabled n'envoie pas de valeur #}
+                        {% if declaration %}<input type="hidden" name="mois" value="{{ declaration.mois }}">{% endif %}
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label fw-bold small text-muted text-uppercase">Année</label>
+                        <input type="number" name="annee" class="form-control border-primary-subtle shadow-sm" value="{{ default_annee }}" required {% if declaration %}readonly{% endif %}>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {# --- LISTE DES MISSIONS --- #}
+        {% for mission in missions %}
+            {% set active_sms = mission.sous_missions | selectattr('is_active') | list %}
+            
+            {% if active_sms %}
+            <div class="card mb-4 border-0 shadow-sm overflow-hidden">
+                <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center py-3">
+                    <span class="fw-bold"><i class="bi bi-folder2-open me-2 text-warning"></i>{{ mission.titre }}</span>
+                    {% if mission.resp_only %}
+                        <span class="badge bg-warning text-dark px-3 rounded-pill border border-dark">
+                            <i class="bi bi-shield-lock-fill me-1"></i> Forfaits Responsable
+                        </span>
+                    {% endif %}
+                </div>
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0 align-middle">
+                        <thead class="table-light">
+                            <tr class="small text-muted text-uppercase">
+                                <th class="ps-4 py-3">Détail de la prestation</th>
+                                <th style="width:160px">Tarif Unitaire</th>
+                                <th style="width:220px">Quantité / Volume</th>
+                                <th style="width:160px" class="text-end pe-4">Montant</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for sm in active_sms | sort(attribute='ordre') %}
+                            <tr>
+                                <td class="ps-4">
+                                    <div class="fw-bold text-dark">{{ sm.titre }}</div>
+                                    <div class="text-muted small">
+                                        {% if sm.description %}
+                                            {{ sm.description }}
+                                        {% else %}
+                                            <span class="badge bg-light text-muted border-0 p-0">Code : {{ sm.code_sage or 'N/A' }}</span>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                                <td>
+                                    <span class="text-dark fw-medium">{{ "%.2f"|format(sm.tarif) }} €</span>
+                                    <div class="text-muted small">{{ sm.unite or 'unité' }}</div>
+                                </td>
+                                <td>
+                                    {% if mission.resp_only %}
+                                        <input type="hidden" name="quantite_{{ sm.id }}" value="1">
+                                        <input type="hidden" class="quantite-input" data-tarif="{{ sm.tarif }}" data-smid="{{ sm.id }}" value="1">
+                                        <div class="badge bg-success-subtle text-success border border-success px-3 py-2 w-100 text-center">
+                                            <i class="bi bi-check-circle-fill me-1"></i> Forfait inclus (1)
+                                        </div>
+                                    {% else %}
+                                        <div class="input-group shadow-sm">
+                                            {# MODIFICATION ICI : type="text" + inputmode pour gérer les virgules proprement #}
+                                            <input type="text" name="quantite_{{ sm.id }}"
+                                                class="form-control quantite-input text-center fw-bold border-primary-subtle"
+                                                data-tarif="{{ sm.tarif }}"
+                                                data-smid="{{ sm.id }}"
+                                                inputmode="decimal"
+                                                value="{{ lignes_map.get(sm.id, '') }}"
+                                                placeholder="0">
+                                            <span class="input-group-text bg-light small fw-medium" style="min-width: 80px; justify-content: center;">
+                                                {{ sm.unite or 'unité' }}
+                                            </span>
+                                        </div>
+                                    {% endif %}
+                                </td>
+                                <td class="text-end pe-4 fw-bold">
+                                    <span class="montant-cell text-primary" id="montant_{{ sm.id }}">0,00 €</span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            {% endif %}
+        {% else %}
+            <div class="alert alert-info border-0 shadow-sm p-4 text-center">
+                <i class="bi bi-info-circle-fill fs-2 mb-3 d-block text-primary"></i>
+                <h5 class="alert-heading fw-bold">Aucune mission disponible</h5>
+                <p class="mb-0">Veuillez contacter votre coordinateur pour vérifier votre périmètre de mission.</p>
+            </div>
+        {% endfor %}
+
+        {# --- BARRE D'ACTIONS FIXE AU BAS --- #}
+        <div class="sticky-bottom-container">
+            <div class="card border-0 shadow-lg border-top border-4 border-success rounded-4">
+                <div class="card-body py-3 px-4">
+                    <div class="row align-items-center">
+                        <div class="col-md-5">
+                            <div class="d-flex align-items-center">
+                                <div class="bg-success-subtle p-2 rounded-3 me-3">
+                                    <i class="bi bi-calculator text-success fs-4"></i>
+                                </div>
+                                <div>
+                                    <div class="text-muted small text-uppercase fw-bold">Total Général Estimé</div>
+                                    <div id="totalAmountBottom" class="h3 mb-0 text-success fw-black">0,00 €</div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-7 text-end">
+                            <div class="d-flex gap-2 justify-content-end">
+                                <a href="/declarations" class="btn btn-outline-secondary px-4 fw-bold">Annuler</a>
+                                
+                                <button type="submit" name="action" value="brouillon" class="btn btn-dark px-4 shadow-sm fw-bold">
+                                    <i class="bi bi-save me-2"></i>Enregistrer brouillon
+                                </button>
+
+                                {% if not declaration or declaration.statut.value == 'brouillon' %}
+                                <button type="submit" name="action" value="soumettre" class="btn btn-success px-4 shadow fw-black"
+                                    onclick="return confirm('Une fois soumise, vous ne pourrez plus modifier cette déclaration. Confirmer ?')">
+                                    <i class="bi bi-send-check-fill me-2"></i>Soumettre au site
+                                </button>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+
+<style>
+    .fw-black { font-weight: 900; }
+    .italic { font-style: italic; }
+    .table-hover tbody tr:hover { background-color: rgba(13, 110, 253, 0.03); transition: 0.2s; }
+    
+    .sticky-bottom-container {
+        position: sticky;
+        bottom: 1.5rem;
+        z-index: 1020;
+        margin-top: 3rem;
+        margin-bottom: 2rem;
+    }
+
+    .quantite-input:focus { 
+        border-color: #198754; 
+        box-shadow: 0 0 0 0.25rem rgba(25, 135, 84, 0.15); 
+    }
+    
+    input::-webkit-outer-spin-button,
+    input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+</style>
+{% endblock %}
+
+{% block scripts %}
+<script>
+/**
+ * Formate un nombre en devise française (EUR)
+ */
+const formatter = new Intl.NumberFormat('fr-FR', { 
+    style: 'currency', 
+    currency: 'EUR',
+    minimumFractionDigits: 2
+});
+
+function recalculate() {
+    let totalGlobal = 0;
+    
+    document.querySelectorAll('.quantite-input').forEach(input => {
+        const tarif = parseFloat(input.dataset.tarif) || 0;
+        // Gestion flexible point/virgule
+        const qtyValue = input.value.toString().replace(',', '.');
+        const qty = parseFloat(qtyValue) || 0;
+        const smId = input.dataset.smid;
+        
+        const montantLigne = tarif * qty;
+        totalGlobal += montantLigne;
+        
+        const cell = document.getElementById('montant_' + smId);
+        if (cell) {
+            cell.textContent = formatter.format(montantLigne);
+            if (montantLigne > 0) {
+                cell.classList.remove('text-primary');
+                cell.classList.add('text-success');
+            } else {
+                cell.classList.remove('text-success');
+                cell.classList.add('text-primary');
+            }
+        }
+    });
+    
+    const totalDisplay = formatter.format(totalGlobal);
+    document.getElementById('totalAmount').textContent = totalDisplay;
+    document.getElementById('totalAmountBottom').textContent = totalDisplay;
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    const inputs = document.querySelectorAll('.quantite-input');
+    
+    inputs.forEach(input => {
+        input.addEventListener('input', recalculate);
+        input.addEventListener('change', recalculate);
+        input.addEventListener('click', function() { this.select(); });
+    });
+    
+    recalculate();
+});
+</script>
+{% endblock %}
