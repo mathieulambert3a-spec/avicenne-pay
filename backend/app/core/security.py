@@ -140,10 +140,10 @@ def check_peut_creer_user(current_user: User = Depends(get_current_user)) -> Use
     return current_user
 
 def check_peut_valider_declaration(current_user: User = Depends(get_current_user)) -> User:
-    """Vérifie si l'utilisateur a un rôle de manager (Admin, Coordo, Resp)."""
-    if current_user.role not in [Role.admin, Role.coordo, Role.resp]:
+    """Vérifie si l'utilisateur a le droit de valider/rejeter (Admin et Coordo uniquement)."""
+    if current_user.role not in [Role.admin, Role.coordo]:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
-            detail="Vous n'avez pas les droits nécessaires pour traiter cette déclaration."
+            detail="Seuls les Administrateurs et les Coordinateurs peuvent valider ou rejeter des déclarations."
         )
     return current_user
