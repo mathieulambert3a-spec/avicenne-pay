@@ -1,0 +1,174 @@
+/* --- Variables de couleurs Avicenne --- */
+:root {
+    --primary-color: #0d6efd;
+    --primary-dark: #0a58ca;
+    --bg-light: #f8f9fa;
+    --danger-color: #dc3545;
+    --warning-color: #ffca2c; /* Jaune Avicenne */
+    --info-soft: #eef2ff;
+    --gray-muted: #6c757d;
+}
+
+/* --- Base & Typographie --- */
+body {
+    background-color: var(--bg-light);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    color: #333;
+}
+
+/* --- Navbar --- */
+.navbar {
+    border-bottom: 2px solid rgba(0,0,0,0.05);
+    background-color: #fff !important;
+}
+.navbar-brand {
+    font-size: 1.3rem;
+    letter-spacing: -0.5px;
+    font-weight: 700;
+}
+
+/* --- Cartes (Cards) --- */
+.card {
+    border: none;
+    border-radius: 0.75rem; 
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.shadow-sm {
+    box-shadow: 0 .125rem .25rem rgba(0,0,0,.075)!important;
+}
+
+/* --- Bouton "Générer les Factures" (Le fameux jaune flashy) --- */
+.btn-warning {
+    background-color: var(--warning-color);
+    border: none;
+    color: #000 !important;
+    font-weight: 700;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+
+.btn-warning:hover {
+    background-color: #f0bc10;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}
+
+.btn-warning:active {
+    transform: translateY(0);
+}
+
+/* --- Tableaux & Stats --- */
+.table thead th {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-weight: 600;
+    color: var(--gray-muted);
+    border-bottom-width: 1px;
+    background-color: rgba(0,0,0,0.01);
+}
+
+.table-hover tbody tr:hover {
+    background-color: rgba(13, 110, 253, 0.02);
+}
+
+/* --- Éléments du Top 10 Contributeurs --- */
+.avatar-circle {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, var(--info-soft), #e0e7ff);
+    color: var(--primary-color);
+    border: 1px solid #d1d9e6;
+    flex-shrink: 0;
+}
+
+/* --- Badges & Progress Bars --- */
+.badge {
+    font-weight: 500;
+    padding: 0.45em 0.8em;
+}
+
+.bg-primary-subtle { background-color: rgba(13, 110, 253, 0.1) !important; }
+.bg-success-subtle { background-color: rgba(25, 135, 84, 0.1) !important; }
+.bg-soft-danger { background-color: rgba(220, 53, 69, 0.1); color: #dc3545; border: 1px solid rgba(220, 53, 69, 0.2); }
+.bg-soft-warning { background-color: rgba(255, 193, 7, 0.1); color: #856404; border: 1px solid rgba(255, 193, 7, 0.2); }
+
+.progress {
+    background-color: #eaecf4;
+    border-radius: 10px;
+}
+
+.progress-bar-dynamic {
+    width: var(--pg-width, 0%);
+    border-radius: 10px;
+    transition: width 0.8s cubic-bezier(0.175, 0.885, 0.32, 1.1); /* Effet d'entrée fluide */
+}
+
+/* --- Accordéons (Référentiel Missions) --- */
+.accordion-header .d-flex { width: 100%; }
+.accordion-button { padding-right: 120px !important; }
+.btn-edit-parent { position: relative; z-index: 10; }
+
+/* --- Animations --- */
+@keyframes pulse-red {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0.7); }
+    70% { transform: scale(1.03); box-shadow: 0 0 0 10px rgba(220, 53, 69, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(220, 53, 69, 0); }
+}
+.animate-pulse {
+    animation: pulse-red 2s infinite;
+    border: 2px solid white !important;
+}
+
+/* --- Impression (Print) --- */
+@media print {
+    .navbar, .btn, footer, form, #export-csv-btn, .input-group, .modal {
+        display: none !important;
+    }
+    body {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        background-color: white;
+    }
+    .card {
+        border: 1px solid #dee2e6 !important;
+        box-shadow: none !important;
+        break-inside: avoid;
+    }
+}
+
+/* --- Interactions --- */
+.hover-primary {
+    transition: all 0.2s ease;
+    color: inherit;
+}
+.hover-primary:hover {
+    color: var(--primary-color) !important;
+    text-decoration: underline !important;
+    cursor: pointer;
+}
+/* --- Logique d'affichage dynamique --- */
+
+/* Masque le conteneur du switch uniquement en mode édition */
+[data-mode="edit"] #editRespSwitchContainer {
+    display: none !important;
+}
+/* Pour uniformiser le bouton de succès avec ton style Avicenne */
+.btn-success {
+    background-color: #198754;
+    border: none;
+    font-weight: 700;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease-in-out;
+}
+.btn-success:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+}

@@ -1,0 +1,30 @@
+# ==========================================
+# REGLES POUR PYTHON (Backend)
+# ==========================================
+.venv/
+__pycache__/
+*.py[cod]
+*.egg-info/
+
+# Data / DB / exports
+data/*
+!data/.gitkeep
+
+# Streamlit
+.streamlit/
+
+# ==========================================
+# REGLES POUR JAVASCRIPT (Frontend)
+# ==========================================
+# Indispensable pour ne pas envoyer les mégaoctets de modules JS
+node_modules/
+dist/
+build/
+.cache/
+
+# ==========================================
+# REGLES POUR L'EDITEUR (VS Code)
+# ==========================================
+.vscode/*
+!.vscode/settings.json
+.DS_Store
